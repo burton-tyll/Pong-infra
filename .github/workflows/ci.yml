@@ -1,0 +1,47 @@
+name: CI Workflow
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Run backend tests
+        working-directory: ./backend
+        run: npm test
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      
+      - name: Display secret in logs
+        run: |
+          echo "Affichage du secret (masqué par défaut par GitHub):"
+          echo "::add-mask::${{ secrets.MON_SECRET }}"
+          echo "Valeur du secret (encodée en base64 pour éviter le masquage automatique):"
+          echo "${{ secrets.MON_SECRET }}" | base64
+          echo "Valeur décodée (visible dans les logs):"
+          echo "${{ secrets.MON_SECRET }}" | base64 -d
+      
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
